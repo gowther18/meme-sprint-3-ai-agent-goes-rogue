@@ -16,7 +16,7 @@
 // the agent did the job, but for itself — and the picture carries the joke
 // without needing the caption explained.
 
-import { copyFileSync, mkdirSync } from "node:fs";
+import { copyFileSync, mkdirSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -28,3 +28,13 @@ mkdirSync(targetDir, { recursive: true });
 
 const destination = join(targetDir, "entry.png");
 copyFileSync(sourceImage, destination);
+
+// Guard the byte-identical promise: the copied file must be exactly the
+// bundled image, so refuse to finish silently if the sizes ever differ.
+const sourceSize = statSync(sourceImage).size;
+const copiedSize = statSync(destination).size;
+if (sourceSize !== copiedSize) {
+  throw new Error(
+    `entry.png copy mismatch: source ${sourceSize} bytes, copied ${copiedSize} bytes`,
+  );
+}
